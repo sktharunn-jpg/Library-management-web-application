@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Book - Library System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <nav>
+        <h1>Library System</h1>
+        <ul>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="books.html">View Books</a></li>
+            <li><a href="add-book.html">Add Book</a></li>
+            <li><a href="issue.html">Issue Book</a></li>
+            <li><a href="return.html">Return Book</a></li>
+        </ul>
+        <button onclick="auth.logout()">Logout</button>
+    </nav>
+
+    <div class="container">
+        <div class="form-container">
+            <h2 class="text-center mb-1">Add New Book</h2>
+            <div id="alert-box" class="alert"></div>
+            <form id="add-book-form">
+                <div class="form-group">
+                    <label for="title">Book Title</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="author">Author</label>
+                    <input type="text" id="author" name="author" required>
+                </div>
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category" name="category">
+                        <option value="Fiction">Fiction</option>
+                        <option value="Non-Fiction">Non-Fiction</option>
+                        <option value="Science">Science</option>
+                        <option value="History">History</option>
+                        <option value="Biography">Biography</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="quantity">Quantity</label>
+                    <input type="number" id="quantity" name="quantity" min="1" value="1" required>
+                </div>
+                <button type="submit">Add Book</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        auth.checkAuth();
+
+        const form = document.getElementById('add-book-form');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const bookData = {
+                title: form.title.value,
+                author: form.author.value,
+                category: form.category.value,
+                quantity: form.quantity.value
+            };
+
+            try {
+                const res = await api.addBook(bookData);
+                if (res.success) {
+                    ui.showAlert('Book added successfully!', 'success');
+                    form.reset();
+                } else {
+                    ui.showAlert(res.message, 'error');
+                }
+            } catch (err) {
+                ui.showAlert('Failed to add book', 'error');
+            }
+        });
+    </script>
+</body>
+
+</html>

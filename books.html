@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Books - Library System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <nav>
+        <h1>Library System</h1>
+        <ul>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="books.html">View Books</a></li>
+            <li><a href="add-book.html">Add Book</a></li>
+            <li><a href="issue.html">Issue Book</a></li>
+            <li><a href="return.html">Return Book</a></li>
+        </ul>
+        <button onclick="auth.logout()">Logout</button>
+    </nav>
+
+    <div class="container">
+        <div class="flex-between mb-1">
+            <h2>Book Inventory</h2>
+            <a href="add-book.html" class="btn btn-small">Add New Book</a>
+        </div>
+
+        <div id="alert-box" class="alert"></div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Category</th>
+                    <th>Total</th>
+                    <th>Available</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="books-table-body">
+                <!-- Books will be loaded here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        auth.checkAuth();
+
+        async function loadBooks() {
+            try {
+                const books = await api.getBooks();
+                const tbody = document.getElementById('books-table-body');
+                tbody.innerHTML = '';
+
+                if (books.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center">No books found</td></tr>';
+                    return;
+                }
+
+                books.forEach(book => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${book.title}</td>
+                        <td>${book.author}</td>
+                        <td>${book.category}</td>
+                        <td>${book.quantity}</td>
+                        <td>${book.available}</td>
+                        <td>
+                            <button class="btn btn-small btn-danger" onclick="deleteBook('${book.id}')">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error(err);
+                ui.showAlert('Failed to load books', 'error');
+            }
+        }
+
+        async function deleteBook(id) {
+            if (!confirm('Are you sure you want to delete this book?')) return;
+
+            try {
+                const res = await api.deleteBook(id);
+                if (res.success) {
+                    ui.showAlert('Book deleted successfully', 'success');
+                    loadBooks(); // Reload table
+                } else {
+                    ui.showAlert(res.message, 'error');
+                }
+            } catch (err) {
+                ui.showAlert('Failed to delete book', 'error');
+            }
+        }
+
+        loadBooks();
+    </script>
+</body>
+
+</html>

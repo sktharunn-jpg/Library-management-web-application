@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issue Book - Library System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <nav>
+        <h1>Library System</h1>
+        <ul>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="books.html">View Books</a></li>
+            <li><a href="add-book.html">Add Book</a></li>
+            <li><a href="issue.html">Issue Book</a></li>
+            <li><a href="return.html">Return Book</a></li>
+        </ul>
+        <button onclick="auth.logout()">Logout</button>
+    </nav>
+
+    <div class="container">
+        <div class="form-container">
+            <h2 class="text-center mb-1">Issue Book</h2>
+            <div id="alert-box" class="alert"></div>
+            <form id="issue-form">
+                <div class="form-group">
+                    <label for="bookId">Select Book</label>
+                    <select id="bookId" name="bookId" required>
+                        <option value="">Loading books...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="studentName">Student Name</label>
+                    <input type="text" id="studentName" name="studentName" required>
+                </div>
+                <div class="form-group">
+                    <label for="issueDate">Issue Date</label>
+                    <input type="date" id="issueDate" name="issueDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="returnDate">Return Date</label>
+                    <input type="date" id="returnDate" name="returnDate" required>
+                </div>
+                <button type="submit">Issue Book</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        auth.checkAuth();
+
+        // Set default dates
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('issueDate').value = today;
+
+        // Default return date +7 days
+        const nextWeek = new Date();
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        document.getElementById('returnDate').value = nextWeek.toISOString().split('T')[0];
+
+        // Load available books
+        async function loadBooks() {
+            try {
+                const books = await api.getBooks();
+                const select = document.getElementById('bookId');
+                select.innerHTML = '<option value="">Select a book...</option>';
+
+                books.forEach(book => {
+                    if (book.available > 0) {
+                        const option = document.createElement('option');
+                        option.value = book.id;
+                        option.textContent = `${book.title} (Available: ${book.available})`;
+                        select.appendChild(option);
+                    }
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+        loadBooks();
+
+        const form = document.getElementById('issue-form');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const issueData = {
+                bookId: form.bookId.value,
+                studentName: form.studentName.value,
+                issueDate: form.issueDate.value,
+                returnDate: form.returnDate.value
+            };
+
+            try {
+                const res = await api.issueBook(issueData);
+                if (res.success) {
+                    ui.showAlert('Book issued successfully!', 'success');
+                    form.reset();
+                    loadBooks(); // Reload to update available counts
+                } else {
+                    ui.showAlert(res.message, 'error');
+                }
+            } catch (err) {
+                ui.showAlert('Failed to issue book', 'error');
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Library System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <nav>
+        <h1>Library System</h1>
+        <ul>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="books.html">View Books</a></li>
+            <li><a href="add-book.html">Add Book</a></li>
+            <li><a href="issue.html">Issue Book</a></li>
+            <li><a href="return.html">Return Book</a></li>
+        </ul>
+        <button onclick="auth.logout()">Logout</button>
+    </nav>
+
+    <div class="container">
+        <h2 class="mb-1">Admin Dashboard</h2>
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>Total Books</h3>
+                <p id="total-books">0</p>
+            </div>
+            <div class="card">
+                <h3>Books Issued</h3>
+                <p id="books-issued">0</p>
+            </div>
+            <div class="card">
+                <h3>Books Available</h3>
+                <p id="books-available">0</p>
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <h3>Quick Actions</h3>
+            <div class="dashboard-grid" style="margin-top: 1rem;">
+                <a href="add-book.html" class="btn">Add New Book</a>
+                <a href="issue.html" class="btn">Issue Book</a>
+                <a href="return.html" class="btn">Return Book</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        auth.checkAuth();
+
+        // Fetch stats
+        async function loadStats() {
+            try {
+                const books = await api.getBooks();
+                const total = books.length;
+                const issued = books.reduce((acc, book) => {
+                    return acc + (book.quantity - book.available);
+                }, 0);
+                const available = books.reduce((acc, book) => acc + book.available, 0);
+
+                document.getElementById('total-books').textContent = total;
+                document.getElementById('books-issued').textContent = issued;
+                document.getElementById('books-available').textContent = available;
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        loadStats();
+    </script>
+</body>
+
+</html>

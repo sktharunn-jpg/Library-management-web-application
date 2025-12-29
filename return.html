@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Return Book - Library System</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <nav>
+        <h1>Library System</h1>
+        <ul>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="books.html">View Books</a></li>
+            <li><a href="add-book.html">Add Book</a></li>
+            <li><a href="issue.html">Issue Book</a></li>
+            <li><a href="return.html">Return Book</a></li>
+        </ul>
+        <button onclick="auth.logout()">Logout</button>
+    </nav>
+
+    <div class="container">
+        <div class="form-container" style="max-width: 600px;">
+            <h2 class="text-center mb-1">Return Book</h2>
+            <div id="alert-box" class="alert"></div>
+
+            <div class="form-group">
+                <label for="bookSearch">Select Issued Book to Return</label>
+                <!-- We will populate this with currently issued books -->
+                <div id="issued-books-list">
+                    <p class="text-center">Loading issued books...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        auth.checkAuth();
+
+        async function loadIssuedBooks() {
+            try {
+                const books = await api.getBooks();
+                const container = document.getElementById('issued-books-list');
+                container.innerHTML = '';
+
+                let hasIssued = false;
+
+                const table = document.createElement('table');
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Book</th>
+                            <th>Student</th>
+                            <th>Due</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                `;
+                const tbody = table.querySelector('tbody');
+
+                books.forEach(book => {
+                    if (book.issued && book.issued.length > 0) {
+                        book.issued.forEach(issue => {
+                            if (!issue.returned) {
+                                hasIssued = true;
+                                const tr = document.createElement('tr');
+                                tr.innerHTML = `
+                                    <td>${book.title}</td>
+                                    <td>${issue.studentName}</td>
+                                    <td>${issue.returnDate}</td>
+                                    <td>
+                                        <button class="btn btn-small" onclick="returnBook('${book.id}', '${issue.id}')">Return</button>
+                                    </td>
+                                `;
+                                tbody.appendChild(tr);
+                            }
+                        });
+                    }
+                });
+
+                if (hasIssued) {
+                    container.appendChild(table);
+                } else {
+                    container.innerHTML = '<p class="text-center">No books are currently issued.</p>';
+                }
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('issued-books-list').textContent = 'Failed to load data';
+            }
+        }
+
+        async function returnBook(bookId, issueId) {
+            if (!confirm('Confirm return of this book?')) return;
+
+            try {
+                const res = await api.returnBook({ bookId, issueId });
+                if (res.success) {
+                    ui.showAlert('Book returned successfully!', 'success');
+                    loadIssuedBooks();
+                } else {
+                    ui.showAlert(res.message, 'error');
+                }
+            } catch (err) {
+                ui.showAlert('Failed to return book', 'error');
+            }
+        }
+
+        loadIssuedBooks();
+    </script>
+</body>
+
+</html>
